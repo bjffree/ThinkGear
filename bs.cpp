@@ -17,6 +17,8 @@
 #include "mcp3008Spi.h"
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
+#include <math.h>
+
 
 #define THINKGEAR_SYNC 0xAA
 #define THINKGEAR_MAX_DATA_SIZE 169
@@ -67,6 +69,36 @@ MYSQL_RES* mysql_perform_query(MYSQL *connection, char *sql_query){
 	}
 	return mysql_use_result(connection);
 }
+int readData(int a2dChannel){
+		int a2dVal=0;
+		mcp3008Spi a2d("/dev/spidev0.0", SPI_MODE_0, 1000000, 8);
+		 unsigned char temper[3];
+		temper[0] = 1;  //  first byte transmitted -> start bit
+        temper[1] = 0b10000000 |( ((a2dChannel & 7) << 4)); // second byte transmitted -> (SGL/DIF = 1, D2=D1=D0=0)
+        temper[2] = 0; // third byte transmitted....don't care
+         a2d.spiWriteRead(temper, sizeof(temper) );
+ 
+ 
+				a2dVal = 0;
+                a2dVal = (temper[1]<< 8) & 0b1100000000; //merge data[1] & data[2] to get result
+                a2dVal |=  (temper[2] & 0xff);
+               
+        sleep(1);
+        
+       
+	return a2dVal;
+}float ConvertVolts(int data){
+	float volts;
+	volts = (data* 3.3) / 1023;
+	volts = roundf(volts);
+	return volts;
+}
+float ConvertTemp(int data){
+	float temp;
+	temp = ((data * 330) / float(1023))-50;
+	temp = roundf(temp);
+	return temp;
+}
 void sigint_handler(int s)
 {
 	// Finish
@@ -93,7 +125,8 @@ int main(int argc, char* argv[])
 {
 	bool connected = false,ready = true, reading = false;
 	int heart = 0,temp = 0;
-	
+	int a2dVal = 0;
+    int a2dChannel;
 	
 	initBluetooth();
 	initPins();
@@ -189,30 +222,7 @@ int main(int argc, char* argv[])
 				if (HEADER > THINKGEAR_SYNC) continue;
 
 
-///////////////////////////////////////////////////////////////////////////////////
 
-	mcp3008Spi a2d("/dev/spidev0.0", SPI_MODE_0, 1000000, 8);
-    int i = 20;
-        int a2dVal = 0;
-    int tempChannel = 0;
-        unsigned char temper[3];
- 
-    while(i > 0)
-    {
-        temper[0] = 1;  //  first byte transmitted -> start bit
-        temper[1] = 0b10000000 |( ((tempChannel & 7) << 4)); // second byte transmitted -> (SGL/DIF = 1, D2=D1=D0=0)
-        temper[2] = 0; // third byte transmitted....don't care
- 
-        a2d.spiWriteRead(temper, sizeof(data) );
- 
-        a2dVal = 0;
-                a2dVal = (temper[1]<< 8) & 0b1100000000; //merge data[1] & data[2] to get result
-                a2dVal |=  (temper[2] & 0xff);
-        sleep(1);
-        cout << "The Result is: " << a2dVal << endl;
-        i--;
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -289,8 +299,8 @@ int main(int argc, char* argv[])
 						case 0x83:
 							
 							int delta,theta,alpha1,alpha2,beta1,beta2,gamma1,gamma2;
-							heart = digitalRead(HEART_SENSOR);
-							temp  = digitalRead(TEMP_SENSOR);
+							heart = ConvertVolts(readData(1));
+							temp  = ConvertTemp(readData(2));
 							
 							
 							fprintf(output, "%llu,", (unsigned long long)time(NULL));
