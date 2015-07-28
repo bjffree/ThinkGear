@@ -32,10 +32,11 @@
 #define PAGE0_ENABLE_HIGH_BAUD_RATE	0b00001000
 #define SHELLSCRIPT "\
 #!/bin/bash \n\
-sudo rfcomm bind 0 74:E5:43:D5:70:37 1 \n\
+sudo rfcomm bind 0 74:E5:43:89:61:86 1 \n\
 "
 //white band 74:E5:43:D5:70:37	
 //brandons 20:68:9D:88:C5:93
+// headset 74:E5:43:89:61:86	
 #define PROBLEM_LED  0
 #define WORKING_LED  6
 #define READY_LED    3
