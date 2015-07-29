@@ -1,3 +1,5 @@
+// last edit by brandon foss july 29 2015
+
 #include <stdio.h>
 #include <iostream>
 #include <stdlib.h>
@@ -30,13 +32,14 @@
 #define PAGE0_ENABLE_MEDITATION		0b00000010
 #define PAGE0_ENABLE_RAW_WAVE		0b00000100
 #define PAGE0_ENABLE_HIGH_BAUD_RATE	0b00001000
+
 #define SHELLSCRIPT "\
 #!/bin/bash \n\
 sudo rfcomm bind 0 74:E5:43:89:61:86 1 \n\
 "
 //white band 74:E5:43:D5:70:37	
 //brandons 20:68:9D:88:C5:93
-// headset 74:E5:43:89:61:86	
+//headset 74:E5:43:89:61:86	
 #define PROBLEM_LED  0
 #define WORKING_LED  6
 #define READY_LED    3
@@ -88,7 +91,8 @@ int readData(int a2dChannel){
         
        
 	return a2dVal;
-}float ConvertVolts(int data){
+}
+float ConvertVolts(int data){
 	float volts;
 	volts = (data* 3.3) / 1023;
 	volts = roundf(volts);
@@ -99,6 +103,15 @@ float ConvertTemp(int data){
 	temp = ((data * 330) / float(1023))-50;
 	temp = roundf(temp);
 	return temp;
+}
+int ConvertHeartRate(int data){
+	
+	int raw = 0,int threshhold = 512;
+	if (readData(data) > threshhold){
+		
+	return raw;
+	
+}
 }
 void sigint_handler(int s)
 {
@@ -300,7 +313,7 @@ int main(int argc, char* argv[])
 						case 0x83:
 							
 							int delta,theta,alpha1,alpha2,beta1,beta2,gamma1,gamma2;
-							heart = ConvertVolts(readData(1));
+							heart = readData(1);
 							temp  = ConvertTemp(readData(2));
 							
 							
@@ -354,27 +367,6 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-/***********************************************************************
- * mcp3008SpiTest.cpp. Sample program that tests the mcp3008Spi class.
- * an mcp3008Spi class object (a2d) is created. the a2d object is instantiated
- * using the overloaded constructor. which opens the spidev0.0 device with
- * SPI_MODE_0 (MODE 0) (defined in linux/spi/spidev.h), speed = 1MHz &
- * bitsPerWord=8.
- *
- * call the spiWriteRead function on the a2d object 20 times. Each time make sure
- * that conversion is configured for single ended conversion on CH0
- * i.e. transmit ->  byte1 = 0b00000001 (start bit)
- *                   byte2 = 0b1000000  (SGL/DIF = 1, D2=D1=D0=0)
- *                   byte3 = 0b00000000  (Don't care)
- *      receive  ->  byte1 = junk
- *                   byte2 = junk + b8 + b9
- *                   byte3 = b7 - b0
- *    
- * after conversion must merge data[1] and data[2] to get final result
- *
- *
- *
- * *********************************************************************/
 
  
   
